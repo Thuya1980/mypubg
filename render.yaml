@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: pubg-scraper
+    env: python
+    buildCommand: ""
+    startCommand: bash start.sh
+    plan: free
