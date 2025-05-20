@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install dependencies
+# Install required dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -23,30 +23,25 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     xdg-utils \
     libu2f-udev \
+    chromium \
+    chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt-get update && \
-    apt-get install -y ./google-chrome-stable_current_amd64.deb && \
-    rm google-chrome-stable_current_amd64.deb
-
-# Install Chromedriver matching Chrome version (currently v124)
-RUN CHROMEDRIVER_VERSION=124.0.6367.91 && \
-    wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
-    chmod +x /usr/local/bin/chromedriver && \
-    rm /tmp/chromedriver.zip
+# Set environment variables
+ENV CHROME_BIN=/usr/bin/chromium
+ENV PATH="${PATH}:/usr/lib/chromium"
 
 # Set display port to avoid crash
 ENV DISPLAY=:99
 
-# Copy project files
+# Set working directory
 WORKDIR /app
+
+# Copy all files
 COPY . .
 
-# Install Python packages
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Run the app with gunicorn
+# Start the Flask app using Gunicorn
 CMD ["gunicorn", "app:application", "--bind", "0.0.0.0:10000"]
