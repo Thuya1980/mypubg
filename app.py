@@ -16,7 +16,7 @@ def get_pubg_username(player_id):
         return jsonify({'error': 'Invalid player ID'}), 400
 
     options = Options()
-    options.binary_location = "/usr/bin/google-chrome"  # ✅ FIXED
+    options.binary_location = "/usr/bin/google-chrome"
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
