@@ -20,6 +20,19 @@ options.add_argument("--window-size=1920,1080")
 
 application = Flask(__name__)
 
+@application.route('/test', methods=['GET'])
+def test_chrome():
+    try:
+        service = Service("/usr/local/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
+        driver.get("https://www.google.com")
+        title = driver.title
+        driver.quit()
+        return jsonify({"success": True, "title": title})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
 @application.route('/get-pubg-username/<player_id>', methods=['GET'])
 def get_pubg_username(player_id):
     if not player_id.isdigit():
