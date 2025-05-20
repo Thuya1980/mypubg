@@ -1,41 +1,49 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
-# Install Chrome & dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     wget \
-    curl \
     unzip \
+    curl \
     gnupg \
     ca-certificates \
     fonts-liberation \
-    libnss3 \
-    libxss1 \
+    libappindicator3-1 \
     libasound2 \
     libatk-bridge2.0-0 \
-    libgtk-3-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libgdk-pixbuf2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
     xdg-utils \
-    libu2f-udev \
-    libvulkan1 \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+    --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/google.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable
+# Install Chrome
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    dpkg -i google-chrome-stable_current_amd64.deb || true && \
+    apt-get -f install -y && \
+    rm google-chrome-stable_current_amd64.deb
 
-# Install ChromeDriver
-RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+') \
-    && DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") \
-    && wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip \
-    && unzip /tmp/chromedriver.zip -d /usr/bin \
-    && chmod +x /usr/bin/chromedriver
+# Install compatible ChromeDriver
+RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+' | head -1) && \
+    CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}") && \
+    wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
+    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm /tmp/chromedriver.zip
 
+# Set display and install Python packages
+ENV DISPLAY=:99
 WORKDIR /app
 COPY . .
-
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 10000
+
 CMD ["gunicorn", "app:application", "--bind", "0.0.0.0:10000"]
