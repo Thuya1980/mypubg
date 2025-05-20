@@ -5,7 +5,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     curl \
-    gnupg2 \
     ca-certificates \
     fonts-liberation \
     libappindicator3-1 \
@@ -26,20 +25,22 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Install Chromium browser
-RUN apt-get update && apt-get install -y chromium-browser && rm -rf /var/lib/apt/lists/*
+# Install Google Chrome stable
+RUN wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt-get update && apt-get install -y /tmp/google-chrome.deb && \
+    rm /tmp/google-chrome.deb
 
-# Get Chromium version and matching ChromeDriver version
-RUN CHROMIUM_VERSION=$(chromium-browser --version | awk '{print $2}') && \
-    echo "Chromium version is $CHROMIUM_VERSION" && \
-    CHROMIUM_MAJOR_MINOR=$(echo $CHROMIUM_VERSION | cut -d'.' -f1-2) && \
-    echo "Major.minor: $CHROMIUM_MAJOR_MINOR" && \
-    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROMIUM_MAJOR_MINOR") && \
+# Get Chrome version and install matching ChromeDriver
+RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}') && \
+    echo "Chrome version is $CHROME_VERSION" && \
+    CHROME_MAJOR_MINOR=$(echo $CHROME_VERSION | cut -d'.' -f1-2) && \
+    echo "Major.minor: $CHROME_MAJOR_MINOR" && \
+    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR_MINOR") && \
     echo "ChromeDriver version: $DRIVER_VERSION" && \
     wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/chromedriver && \
     rm /tmp/chromedriver.zip
 
-# Set default command to show versions (for testing)
-CMD chromium-browser --version && chromedriver --version
+# Test versions
+CMD google-chrome --version && chromedriver --version
