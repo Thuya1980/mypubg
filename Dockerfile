@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install required dependencies
+# Install dependencies and chromium + chromedriver
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -27,21 +27,24 @@ RUN apt-get update && apt-get install -y \
     chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables
-ENV CHROME_BIN=/usr/bin/chromium
-ENV PATH="${PATH}:/usr/lib/chromium"
+# Symlink chromedriver to /usr/bin for easy access
+RUN ln -sf /usr/lib/chromium/chromedriver /usr/bin/chromedriver
 
-# Set display port to avoid crash
+# Set environment variables for chromium
+ENV CHROME_BIN=/usr/bin/chromium
+ENV PATH="${PATH}:/usr/bin"
+
+# Set display port (headless Chrome)
 ENV DISPLAY=:99
 
 # Set working directory
 WORKDIR /app
 
-# Copy all files
+# Copy source code
 COPY . .
 
-# Install Python dependencies
+# Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Start the Flask app using Gunicorn
+# Run the app using gunicorn on port 10000
 CMD ["gunicorn", "app:application", "--bind", "0.0.0.0:10000"]
