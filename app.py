@@ -7,9 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Set Chrome options for headless Chrome in Linux
 options = Options()
-options.binary_location = "/usr/bin/chromium"  # Chromium path inside the container
+options.binary_location = "/usr/bin/chromium"  
 options.add_argument("--headless=new")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
@@ -27,14 +26,13 @@ def get_pubg_username(player_id):
 
     driver = None
     try:
-        # Use the correct chromedriver path installed by the package
-        service = Service("/usr/lib/chromium/chromedriver")
+        service = Service(executable_path="/usr/lib/chromium/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
+
 
         driver.get("https://www.midasbuy.com/midasbuy/mm/buy/pubgm")
         driver.execute_script("window.scrollTo(0, 300);")
 
-        # Try to close popup if exists
         try:
             ad = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "div.PopGetPoints_close__L1oSl"))
@@ -43,13 +41,11 @@ def get_pubg_username(player_id):
         except:
             pass
 
-        # Click login button for non-logged users
         login_btn = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "div.UserTabBox_login_text__8GpBN"))
         )
         login_btn.click()
 
-        # Enter the Player ID
         input_box = WebDriverWait(driver, 5).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, "input[placeholder='Enter Player ID']"))
         )
@@ -57,14 +53,12 @@ def get_pubg_username(player_id):
         input_box.send_keys(player_id)
         input_box.send_keys(Keys.ENTER)
 
-        # Check if error message is shown
         try:
             err = WebDriverWait(driver, 3).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "div.SelectServerBox_error_text__JWMz-"))
             )
             return jsonify({'success': False, 'error': err.text, 'player_id': player_id})
         except:
-            # Otherwise, get the username
             username = WebDriverWait(driver, 5).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "span.UserTabBox_name__4ogGM"))
             )
