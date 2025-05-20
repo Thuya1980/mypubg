@@ -7,47 +7,32 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Chrome options setup
-options = Options()
-options.binary_location = "/usr/bin/chromium"  # chromium binary path in container
-options.add_argument("--headless=new")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("--disable-blink-features=AutomationControlled")
-options.add_argument("--disable-extensions")
-options.add_argument("--disable-gpu")
-options.add_argument("--window-size=1920,1080")
-
 application = Flask(__name__)
-
-@application.route('/test', methods=['GET'])
-def test_chrome():
-    try:
-        service = Service("/usr/local/bin/chromedriver")
-        driver = webdriver.Chrome(service=service, options=options)
-        driver.get("https://www.google.com")
-        title = driver.title
-        driver.quit()
-        return jsonify({"success": True, "title": title})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
-
 
 @application.route('/get-pubg-username/<player_id>', methods=['GET'])
 def get_pubg_username(player_id):
     if not player_id.isdigit():
         return jsonify({'error': 'Invalid player ID'}), 400
 
+    options = Options()
+    options.binary_location = "/usr/bin/google-chrome"  # ✅ FIXED
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1080")
+
     driver = None
     try:
-        # Explicit chromedriver path that matches symlink in Dockerfile
-        service = Service(executable_path="/usr/local/bin/chromedriver")
+        service = Service("/usr/local/bin/chromedriver")  # ✅ FIXED
         driver = webdriver.Chrome(service=service, options=options)
 
         driver.get("https://www.midasbuy.com/midasbuy/mm/buy/pubgm")
         driver.execute_script("window.scrollTo(0, 300);")
 
-        # Close popup if it exists
+        # Close popup
         try:
             ad = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "div.PopGetPoints_close__L1oSl"))
@@ -56,13 +41,13 @@ def get_pubg_username(player_id):
         except:
             pass
 
-        # Click login button for non-logged users
+        # Click login button
         login_btn = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "div.UserTabBox_login_text__8GpBN"))
         )
         login_btn.click()
 
-        # Enter player ID
+        # Enter Player ID
         input_box = WebDriverWait(driver, 5).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, "input[placeholder='Enter Player ID']"))
         )
@@ -70,14 +55,13 @@ def get_pubg_username(player_id):
         input_box.send_keys(player_id)
         input_box.send_keys(Keys.ENTER)
 
-        # Check error message
+        # Error check
         try:
             err = WebDriverWait(driver, 3).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "div.SelectServerBox_error_text__JWMz-"))
             )
             return jsonify({'success': False, 'error': err.text, 'player_id': player_id})
         except:
-            # Get username if no error
             username = WebDriverWait(driver, 5).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "span.UserTabBox_name__4ogGM"))
             )
@@ -85,7 +69,6 @@ def get_pubg_username(player_id):
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'player_id': player_id})
-
     finally:
         if driver:
             driver.quit()
