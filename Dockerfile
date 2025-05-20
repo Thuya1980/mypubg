@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-# Install dependencies
+# Install system dependencies and Chrome
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -23,24 +23,32 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
-    --no-install-recommends && rm -rf /var/lib/apt/lists/*
+    python3 \
+    python3-pip \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome stable
+# Install Google Chrome
 RUN wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get update && apt-get install -y /tmp/google-chrome.deb && \
     rm /tmp/google-chrome.deb
 
-# Get Chrome version and install matching ChromeDriver
+# Install ChromeDriver
 RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}') && \
-    echo "Chrome version is $CHROME_VERSION" && \
     CHROME_MAJOR_MINOR=$(echo $CHROME_VERSION | cut -d'.' -f1-2) && \
-    echo "Major.minor: $CHROME_MAJOR_MINOR" && \
     DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR_MINOR") && \
-    echo "ChromeDriver version: $DRIVER_VERSION" && \
     wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/chromedriver && \
     rm /tmp/chromedriver.zip
 
-# Test versions
-CMD google-chrome --version && chromedriver --version
+# Copy application and install Python dependencies
+COPY app.py .
+RUN pip3 install flask selenium
+
+# Use non-root user
+RUN useradd -m appuser
+USER appuser
+
+# Run the application
+CMD ["python3", "app.py"]
