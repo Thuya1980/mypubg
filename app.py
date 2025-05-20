@@ -28,7 +28,7 @@ def get_pubg_username(player_id):
     driver = None
     try:
         # Explicit chromedriver path that matches symlink in Dockerfile
-        service = Service(executable_path="/usr/bin/chromedriver")
+        service = Service(executable_path="/usr/local/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
         driver.get("https://www.midasbuy.com/midasbuy/mm/buy/pubgm")
