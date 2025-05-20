@@ -1,51 +1,64 @@
-FROM python:3.10-slim
+# Base image - Debian slim (သို့) Ubuntu ကို သုံးပါ
+FROM ubuntu:22.04
 
-# Install system dependencies
+# အရေးပါတဲ့ tools များ install
 RUN apt-get update && apt-get install -y \
     wget \
-    curl \
     unzip \
+    curl \
     gnupg \
+    ca-certificates \
     fonts-liberation \
     libnss3 \
-    libxss1 \
-    libappindicator3-1 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libgtk-3-0 \
+    libx11-6 \
     libx11-xcb1 \
     libxcomposite1 \
+    libxcursor1 \
     libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
     libxrandr2 \
+    libxrender1 \
+    libxss1 \
+    libxtst6 \
+    libglib2.0-0 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libasound2 \
+    lsb-release \
     xdg-utils \
-    ca-certificates \
-    --no-install-recommends && rm -rf /var/lib/apt/lists/*
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome (latest stable)
+# Google Chrome 114.0.5735.90 version ကို install
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
-    apt-get update && apt-get install -y google-chrome-stable && rm -rf /var/lib/apt/lists/*
+    apt-get update && \
+    apt-get install -y google-chrome-stable=114.0.5735.90-1 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Chrome version ကို major version (125) ဆိုတာအထိ extract လုပ်
-RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d '.' -f 1) && \
-    echo "Detected Chrome Major Version: $CHROME_VERSION" && \
-    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") && \
-    echo "Matching ChromeDriver Version: $DRIVER_VERSION" && \
-    wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
+# ChromeDriver ကို manual နဲ့ install (version ကို Chrome version နဲ့ မိမိချိန်ညှိထား)
+RUN wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip" && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/chromedriver && \
     rm /tmp/chromedriver.zip
 
+# Optional: ChromeDriver, Google Chrome လမ်းကြောင်းစစ်ဆေးခြင်း (debug)
+RUN google-chrome --version && chromedriver --version
 
-
-# Set work directory
+# App ကို copy လုပ်ပြီး သက်ဆိုင်ရာ commands ထည့်ပါ
+COPY . /app
 WORKDIR /app
 
-# Copy source code
-COPY . .
+# Python requirements (သို့) သင့်အတွက် အခြား depencies install လုပ်ပါ (ဥပမာ)
+# RUN pip install -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Expose port and run app
-CMD ["gunicorn", "app:application", "--bind", "0.0.0.0:10000"]
+# Flask app run (ဥပမာ)
+CMD ["python3", "app.py"]
