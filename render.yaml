@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: pubg-scraper
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
