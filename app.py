@@ -1,3 +1,4 @@
+import os  # Add this import at the top
 from flask import Flask, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -74,4 +75,5 @@ def get_pubg_username(player_id):
             driver.quit()
 
 if __name__ == '__main__':
-    application.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get('PORT', 10000))  # Get port from environment
+    application.run(host='0.0.0.0', port=port)
