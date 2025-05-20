@@ -26,20 +26,20 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Install Chromium browser (close to Chrome)
+# Install Chromium browser
 RUN apt-get update && apt-get install -y chromium-browser && rm -rf /var/lib/apt/lists/*
 
-# Get Chromium version
+# Get Chromium version and matching ChromeDriver version
 RUN CHROMIUM_VERSION=$(chromium-browser --version | awk '{print $2}') && \
     echo "Chromium version is $CHROMIUM_VERSION" && \
-    CHROMIUM_MAJOR_MINOR_BUILD=$(echo $CHROMIUM_VERSION | cut -d'.' -f1-3) && \
-    echo "Major.minor.build: $CHROMIUM_MAJOR_MINOR_BUILD" && \
-    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROMIUM_MAJOR_MINOR_BUILD") && \
+    CHROMIUM_MAJOR_MINOR=$(echo $CHROMIUM_VERSION | cut -d'.' -f1-2) && \
+    echo "Major.minor: $CHROMIUM_MAJOR_MINOR" && \
+    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROMIUM_MAJOR_MINOR") && \
     echo "ChromeDriver version: $DRIVER_VERSION" && \
     wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/chromedriver && \
     rm /tmp/chromedriver.zip
 
-# Set default command to show versions (test)
+# Set default command to show versions (for testing)
 CMD chromium-browser --version && chromedriver --version
