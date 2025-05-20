@@ -1,5 +1,1 @@
-git init
-git add .
-git commit -m "Initial commit"
-gh repo create my-flask-app --public --source=. --remote=origin
-git push -u origin main
+https://pubg-scraper.onrender.com/get-pubg-username/52291027230
