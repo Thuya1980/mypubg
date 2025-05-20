@@ -8,52 +8,41 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Configure Chrome options for headless Linux environment
 options = Options()
-options.binary_location = "/usr/bin/google-chrome"  # Linux Chrome path
+options.binary_location = "/usr/bin/google-chrome"
 options.add_argument("--headless=new")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-gpu")
-options.add_argument("--disable-blink-features=AutomationControlled")
-options.add_argument("--disable-extensions")
-options.add_argument("--no-sandbox")  # Required for Linux sandbox
-options.add_argument("--disable-dev-shm-usage")  # Avoid /dev/shm issues
-options.add_argument("--disable-software-rasterizer")
 options.add_argument("--window-size=1920,1080")
 
-application = Flask(__name__)  # Flask app instance named 'application'
+application = Flask(__name__)
 
 @application.route('/get-pubg-username/<player_id>', methods=['GET'])
 def get_pubg_username(player_id):
     if not player_id.isdigit():
         return jsonify({'error': 'Invalid player ID'}), 400
-    
-    driver = None
+
     try:
-        # Use system chromedriver path
         service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
         driver.get("https://www.midasbuy.com/midasbuy/mm/buy/pubgm")
-
-        # Scroll to trigger popup
         driver.execute_script("window.scrollTo(0, 300);")
 
-        # Close popup if exists
         try:
             adClose_button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "div.PopGetPoints_close__L1oSl"))
             )
             driver.execute_script("arguments[0].click();", adClose_button)
         except:
-            pass  # Popup did not appear, continue
+            pass
 
-        # Click non-logged in arrow
         notLogin_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "div.UserTabBox_login_text__8GpBN"))
         )
         driver.execute_script("arguments[0].click();", notLogin_button)
 
-        # Enter Player ID
         input_box = WebDriverWait(driver, 5).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, "input[placeholder='Enter Player ID']"))
         )
@@ -61,30 +50,24 @@ def get_pubg_username(player_id):
         input_box.send_keys(player_id)
         input_box.send_keys(Keys.ENTER)
 
-        # Check for error message
         try:
             error = WebDriverWait(driver, 3).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "div.SelectServerBox_error_text__JWMz-"))
             )
             return {'success': False, 'player_id': player_id, 'error': error.text}
         except:
-            # Try to get username
             try:
                 username_span = WebDriverWait(driver, 5).until(
                     EC.visibility_of_element_located((By.CSS_SELECTOR, "span.UserTabBox_name__4ogGM"))
                 )
-                username = username_span.text
-                return {'success': True, 'player_id': player_id, 'username': username}
+                return {'success': True, 'player_id': player_id, 'username': username_span.text}
             except:
-                return {'success': False, 'player_id': player_id, 'error': 'Username not found, unknown page state'}
+                return {'success': False, 'player_id': player_id, 'error': 'Username not found'}
+
     except Exception as e:
-        if driver:
-            with open("error_page.html", "w", encoding="utf-8") as f:
-                f.write(driver.page_source)
-            driver.save_screenshot("error.png")
         return {'success': False, 'player_id': player_id, 'error': str(e)}
     finally:
-        if driver:
+        if 'driver' in locals():
             driver.quit()
 
 if __name__ == '__main__':
