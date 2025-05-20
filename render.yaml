@@ -3,4 +3,4 @@ services:
     name: pubg-scraper
     env: docker
     plan: free
-    dockerfilePath: Dockerfile
+    region: oregon
