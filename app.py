@@ -1,5 +1,4 @@
 from flask import Flask, jsonify
-import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -8,14 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-options = Options()
-options.binary_location = "/usr/bin/google-chrome"
-options.add_argument("--headless=new")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("--disable-gpu")
-options.add_argument("--window-size=1920,1080")
-
 application = Flask(__name__)
 
 @application.route('/get-pubg-username/<player_id>', methods=['GET'])
@@ -23,8 +14,16 @@ def get_pubg_username(player_id):
     if not player_id.isdigit():
         return jsonify({'error': 'Invalid player ID'}), 400
 
+    options = Options()
+    options.binary_location = "/usr/bin/google-chrome"
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1080")
+
     try:
-        service = Service("/usr/bin/chromedriver")
+        service = Service("/usr/local/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
         driver.get("https://www.midasbuy.com/midasbuy/mm/buy/pubgm")
@@ -56,14 +55,10 @@ def get_pubg_username(player_id):
             )
             return {'success': False, 'player_id': player_id, 'error': error.text}
         except:
-            try:
-                username_span = WebDriverWait(driver, 5).until(
-                    EC.visibility_of_element_located((By.CSS_SELECTOR, "span.UserTabBox_name__4ogGM"))
-                )
-                return {'success': True, 'player_id': player_id, 'username': username_span.text}
-            except:
-                return {'success': False, 'player_id': player_id, 'error': 'Username not found'}
-
+            username_span = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "span.UserTabBox_name__4ogGM"))
+            )
+            return {'success': True, 'player_id': player_id, 'username': username_span.text}
     except Exception as e:
         return {'success': False, 'player_id': player_id, 'error': str(e)}
     finally:
