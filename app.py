@@ -12,7 +12,7 @@ application = Flask(__name__)
 
 def create_driver():
     options = Options()
-    options.binary_location = "/usr/bin/google-chrome"
+    options.binary_location = "/usr/bin/chromium"
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -21,7 +21,7 @@ def create_driver():
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-blink-features=AutomationControlled")
 
-    service = Service("/usr/local/bin/chromedriver")
+    service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=options)
 
 @application.route('/get-pubg-username/<player_id>', methods=['GET'])
