@@ -1,60 +1,61 @@
-FROM ubuntu:22.04
+# Use an official Python base image
+FROM python:3.10-slim
 
-# Enable universe repository and install dependencies
-RUN apt-get update && \
-    sed -i '/universe/s/^# //g' /etc/apt/sources.list && \
-    apt-get update -y && \
-    apt-get install -y --no-install-recommends \
-        wget \
-        unzip \
-        curl \
-        ca-certificates \
-        fonts-liberation \
-        libappindicator3-1 \
-        libasound2 \
-        libatk-bridge2.0-0 \
-        libatk1.0-0 \
-        libcups2 \
-        libdbus-1-3 \
-        libdrm2 \
-        libgbm1 \
-        libgtk-3-0 \
-        libnspr4 \
-        libnss3 \
-        libx11-xcb1 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxrandr2 \
-        xdg-utils \
-        python3 \
-        python3-pip \
-        libvulkan1 \
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Install necessary dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    curl \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libgdk-pixbuf2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome
-RUN wget -q -O /tmp/chrome.deb \
-    https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt-get install -y /tmp/chrome.deb && \
-    rm /tmp/chrome.deb
+# Install specific version of Google Chrome (v124.0.6367.207)
+RUN wget -q https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_124.0.6367.207-1_amd64.deb && \
+    apt-get update && apt-get install -y ./google-chrome-stable_124.0.6367.207-1_amd64.deb && \
+    rm google-chrome-stable_124.0.6367.207-1_amd64.deb
 
-# Install ChromeDriver (with version matching)
-RUN CHROME_VERSION=$(google-chrome --version | awk -F '[ .]' '{print $3"."$4"."$5}') && \
-    echo "Chrome version: $CHROME_VERSION" && \
-    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") && \
-    echo "ChromeDriver version: $DRIVER_VERSION" && \
-    wget -O /tmp/chromedriver.zip \
-    "https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip" && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+# Install matching ChromeDriver
+RUN wget -q https://chromedriver.storage.googleapis.com/124.0.6367.207/chromedriver_linux64.zip && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/local/bin/chromedriver && \
     chmod +x /usr/local/bin/chromedriver && \
-    rm /tmp/chromedriver.zip
+    rm chromedriver_linux64.zip
 
-# Copy app files
-COPY . /app
+# Set display port to avoid crashing
+ENV DISPLAY=:99
+
+# Set work directory
 WORKDIR /app
-RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Create non-root user
-RUN useradd -m appuser
-USER appuser
+# Copy project files
+COPY . .
 
-CMD ["python3", "app.py"]
+# Install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Expose the port the app runs on
+EXPOSE 10000
+
+# Run the Flask app
+CMD ["python", "app.py"]
