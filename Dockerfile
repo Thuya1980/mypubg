@@ -35,11 +35,11 @@ RUN wget -q https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chro
     rm google-chrome-stable_124.0.6367.207-1_amd64.deb
 
 # Install matching ChromeDriver
-RUN wget -q https://chromedriver.storage.googleapis.com/124.0.6367.207/chromedriver_linux64.zip && \
-    unzip chromedriver_linux64.zip && \
-    mv chromedriver /usr/local/bin/chromedriver && \
+RUN wget -q https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/124.0.6367.207/linux64/chromedriver-linux64.zip -O /tmp/chromedriver.zip && \
+    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+    mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
     chmod +x /usr/local/bin/chromedriver && \
-    rm chromedriver_linux64.zip
+    rm -rf /tmp/chromedriver.zip /usr/local/bin/chromedriver-linux64
 
 # Set display port to avoid crashing
 ENV DISPLAY=:99
