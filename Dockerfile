@@ -1,11 +1,8 @@
-# Use an official Python base image
 FROM python:3.10-slim
 
-# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -27,9 +24,12 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
+    libgbm-dev \
+    libgtk-3-0 \
+    libxss1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install specific version of Google Chrome (v124.0.6367.207)
+# Install Google Chrome stable 124.0.6367.207
 RUN wget -q https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_124.0.6367.207-1_amd64.deb && \
     apt-get update && apt-get install -y ./google-chrome-stable_124.0.6367.207-1_amd64.deb && \
     rm google-chrome-stable_124.0.6367.207-1_amd64.deb
@@ -41,21 +41,14 @@ RUN wget -q https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/124.0.63
     chmod +x /usr/local/bin/chromedriver && \
     rm -rf /tmp/chromedriver.zip /usr/local/bin/chromedriver-linux64
 
-# Set display port to avoid crashing
-ENV DISPLAY=:99
-
-# Set work directory
 WORKDIR /app
 
-# Copy project files
-COPY . .
-
-# Install Python dependencies
+COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Expose the port the app runs on
+COPY . .
+
 EXPOSE 10000
 
-# Run the Flask app
-CMD ["python", "app.py"]
+CMD ["gunicorn", "app:application", "--bind", "0.0.0.0:10000", "--workers", "1"]
