@@ -22,8 +22,7 @@ def create_driver():
     options.add_argument("--disable-blink-features=AutomationControlled")
 
     service = Service("/usr/local/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=options)
-    return driver
+    return webdriver.Chrome(service=service, options=options)
 
 @application.route('/get-pubg-username/<player_id>', methods=['GET'])
 def get_pubg_username(player_id):
@@ -37,7 +36,6 @@ def get_pubg_username(player_id):
         driver.get("https://www.midasbuy.com/midasbuy/mm/buy/pubgm")
         driver.execute_script("window.scrollTo(0, 300);")
 
-        # Close popup if appears
         try:
             ad = WebDriverWait(driver, 3).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "div.PopGetPoints_close__L1oSl"))
@@ -46,13 +44,11 @@ def get_pubg_username(player_id):
         except:
             pass
 
-        # Click login button
         login_btn = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "div.UserTabBox_login_text__8GpBN"))
         )
         login_btn.click()
 
-        # Enter Player ID
         input_box = WebDriverWait(driver, 5).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, "input[placeholder='Enter Player ID']"))
         )
@@ -60,7 +56,6 @@ def get_pubg_username(player_id):
         input_box.send_keys(player_id)
         input_box.send_keys(Keys.ENTER)
 
-        # Check for error message
         try:
             err = WebDriverWait(driver, 3).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "div.SelectServerBox_error_text__JWMz-"))
