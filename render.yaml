@@ -4,3 +4,5 @@ services:
     env: docker
     plan: free
     region: oregon
+    # Tell Render how to start your app
+    startCommand: gunicorn app:application --bind 0.0.0.0:$PORT --workers 1
